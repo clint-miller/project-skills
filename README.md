@@ -1,6 +1,6 @@
 # Project Skills
 
-Shared, project-agnostic skills for use across Clint Miller's project repositories.
+Shared, project-agnostic skills for use across project repositories.
 
 This repository is intended to be included in other repositories as a Git submodule so reusable workflows can be maintained once and consumed consistently everywhere.
 
