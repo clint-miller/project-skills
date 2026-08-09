@@ -11,6 +11,9 @@ Each skill lives in its own top-level directory:
 ```text
 project-skills/
 ├── README.md
+├── agent-reporting/
+│   ├── README.md
+│   └── SKILL.md
 └── pw-workflow/
     ├── README.md
     └── SKILL.md
@@ -83,6 +86,12 @@ Do not modify files inside `.project-skills/` as part of normal project work. Ch
 Project-specific instructions remain authoritative for project-specific policy. Shared skills should provide reusable workflow behavior without replacing local governance, safety rules, release policy, CI requirements, or approval gates.
 
 ## Available skills
+
+### `agent-reporting`
+
+Concise autonomous-agent completion/wait/handoff contract using `STATUS / EVIDENCE / CHANGES / VALIDATION / ROADMAP / NEXT / BLOCKER / HANDOFF`. Durable project truth stays in the target repository; the envelope carries exact verification and resume evidence.
+
+See [`agent-reporting/README.md`](agent-reporting/README.md) and [`agent-reporting/SKILL.md`](agent-reporting/SKILL.md).
 
 ### `pw-workflow`
 
