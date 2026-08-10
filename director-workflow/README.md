@@ -11,7 +11,8 @@ Shared control-plane workflow for interacting with Director and managed project 
 - planning next work without automatically queuing it;
 - queue control and reprioritization;
 - full-queue or project-level reconciliation;
-- reporting only items that genuinely require Clint.
+- reporting only items that genuinely require Clint;
+- submitting Director work while remaining inside a managed project's chat/repository scope.
 
 ## Commands
 
@@ -28,6 +29,23 @@ director-needs-me
 ```
 
 Natural-language equivalents are intentionally supported. Examples include `What is the Director status?`, `What is going on with Futures?`, `Add this to Futures: ...`, `Look at Futures and add whatever it actually needs next`, `Make Futures the top priority`, and `What needs me?`.
+
+## Use from a managed project chat
+
+When a chat is already scoped to a managed project, Director control-plane submission for that same project does not switch the project's working scope.
+
+Examples:
+
+```text
+Add this to Director: <request>
+Queue this for later: <request>
+Add whatever this project needs next to Director.
+What does Director have queued for this project?
+```
+
+The current project is inferred unless the user names another target. The workflow writes only the minimum required orchestration state; it does not begin unrelated development in the Director repository.
+
+Existing consuming repositories use pinned `.project-skills` submodule commits. They must deliberately advance that pointer before they receive a newer shared-skill version.
 
 ## Core architecture
 
