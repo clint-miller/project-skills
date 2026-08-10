@@ -43,7 +43,7 @@ git commit -m "Add shared project skills submodule"
 
 The recommended mount point is `.project-skills/`. Using the same location in every project keeps project instructions portable.
 
-Because this repository is private, the developer, automation runner, or agent cloning a consuming repository must also have access to `clint-miller/project-skills`.
+The developer, automation runner, or agent cloning a consuming repository must be able to access and initialize `clint-miller/project-skills`.
 
 ## Clone a project that uses the submodule
 
