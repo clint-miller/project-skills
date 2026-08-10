@@ -79,6 +79,29 @@ When these disagree, identify the disagreement and reconcile it rather than sile
 7. **Keep project docs current.** Material project state changes must be reflected durably in the managed repository before successful handoff.
 8. **A fresh agent must be able to resume from durable state.** Never make chat history necessary for safe continuation.
 
+# Cross-repo Director submission from a managed project chat
+
+A user may invoke Director control-plane operations while working inside a specific managed project/repository chat.
+
+This is a first-class workflow and does **not** by itself switch the chat's project work scope.
+
+When the current chat is clearly scoped to a managed project:
+
+- `Add this to Director: <request>` means add work for the current project unless the user names another target.
+- `Queue this for later: <request>` may be treated as explicit `director-add-work` for the current project when Director intent is unmistakable from context.
+- `Add whatever this project needs next to Director` means derived `director-add-work` for the current project.
+- `What does Director have queued for this project?` means `director-project-status` for the current project.
+
+The current managed project may therefore remain the working scope while the skill writes the minimum required orchestration mutation to Director's authoritative control-plane state.
+
+This control-plane submission is not implementation work in the Director repository. Do not begin unrelated Director development, refactoring, or project execution merely because Director state must be updated.
+
+When `pw-workflow` has locked the chat to the current project, a Director queue submission **for that same project** is compatible with the scope lock because it is orchestration of the current project, not a switch to a second project.
+
+If the user explicitly names a different managed project, a narrowly bounded Director queue/control mutation may still be recorded when the target and requested work are already unambiguous. Do not use that as a pretext to perform deep implementation or derived planning in the other project when doing so would violate the current chat's project-work scope.
+
+If the Director repository/control plane is not writable from the current environment, persist the request through any project-native Director intake/handoff mechanism defined by the architecture. If no authorized durable path is available, report the blocker rather than pretending the work was queued.
+
 # Repository documentation synchronization invariant
 
 Repository documentation freshness is a Director lifecycle requirement, not optional maintenance.
