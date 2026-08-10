@@ -1,14 +1,28 @@
+---
+name: agent-reporting
+description: Concise durable-state reporting contract for autonomous agents completing, pausing, waiting, failing, handing off, or exiting a bounded work cycle. Use it to make results verifiable and resumable without inventing authority, project completion, scheduler effects, or new execution lineages.
+---
+
 # Agent Reporting Skill
 
 ## Purpose
 
 Use this skill whenever an autonomous agent completes, pauses, waits, fails, hands off, or is superseded during a bounded work cycle.
 
-The goal is to make the result immediately actionable by another agent or control plane without conversational padding. The report is a transport envelope, not a replacement for durable project documentation.
+The goal is to make the result immediately actionable by another agent or control plane without conversational padding. The report is a transport envelope, not a replacement for durable project documentation or orchestration state.
+
+## Authority rules
+
+1. **Durable project/runtime state is authoritative.** The report summarizes it; the report does not create new authority.
+2. **A completed bounded slice is not automatically a completed project.** Do not declare the managed project finished unless its authoritative project-native status/roadmap supports that conclusion.
+3. **A handoff report does not grant scheduler or worker-control authority.** Follow the parent project's role boundaries. If the current role is not allowed to schedule/rearm another worker, persist the handoff durably and report that scheduler action belongs elsewhere.
+4. **Do not invent a new execution lineage.** CI waits, control-plane review, or a later worker invocation do not by themselves require a new attempt/branch/fence. Preserve the current lineage unless durable authority explicitly supersedes it.
+5. **Telemetry is not automatically authority.** UI labels, task status, timestamps, or other scheduler metadata should be reported as telemetry when useful, not treated as stronger than the project's declared durable source of truth.
+6. **Never expose private chain-of-thought.** Report decisions, evidence, and outcomes only.
 
 ## Required report order
 
-Lead with state. Use these headings in this order:
+Use every heading, in this order:
 
 ```text
 STATUS
@@ -21,59 +35,101 @@ BLOCKER
 HANDOFF
 ```
 
-Omit a heading only when it is genuinely not applicable. Never replace `BLOCKER` with vague uncertainty; use `None` when there is no blocker.
+Use `None` when a field has no applicable content. Keeping all headings makes reports machine- and human-scannable across projects.
 
 ## Field contract
 
 ### STATUS
 
-One or two lines describing the current bounded-work state. Prefer explicit lifecycle terms such as `running`, `waiting_ci`, `waiting_external`, `completed`, `blocked`, `failed`, `superseded`, or `late_exit` when the parent project defines them.
+One or two lines describing the current bounded-work state. Prefer explicit lifecycle terms such as `running`, `returned_to_control_plane`, `ci_observing`, `waiting_ci`, `waiting_external`, `completed`, `blocked`, `failed`, `superseded`, or `late_exit` when the parent project defines them.
+
+Distinguish the bounded work object's state from the overall project's state when that matters. For example, `completed — Today acceptance slice complete; Atlas Dashboard remains active` is preferable to an ambiguous `completed`.
 
 ### EVIDENCE
 
-List only durable evidence needed to verify the result: repository, branch, exact commit/head SHA, issue/PR, CI run/workflow, deployment/preview, artifact/checkpoint path, or other authoritative identifiers.
+List only durable evidence needed to verify or resume the result: repository, work/objective id, attempt/fence when applicable, branch, exact commit/head SHA, issue/PR, CI run/workflow, deployment/preview, artifact/checkpoint path, or other authoritative identifiers.
 
-When CI is involved, include the exact candidate SHA the CI run is expected to validate.
+When CI is involved, include the exact candidate SHA the run is expected to validate. Do not imply that a run for one SHA validates another.
+
+When scheduler/task telemetry is materially useful, label it as observed telemetry unless the parent project explicitly makes it authoritative.
 
 ### CHANGES
 
-State what was actually changed during this cycle. Do not restate the objective. If no project mutation occurred, say `None`.
+State what was actually changed during this cycle. Do not restate the objective. If no project/runtime mutation occurred, say `None`.
+
+Do not claim a scheduler mutation, merge, deployment, notification, or other external effect unless it actually occurred and was verified.
 
 ### VALIDATION
 
-State what was tested or checked and the exact candidate/head it applied to. Separate passed, failed, queued, and in-progress validation. Never imply a run validated a newer or different SHA.
+State what was tested or checked and the exact candidate/head it applied to. Separate passed, failed, queued, in-progress, and not-run validation.
+
+For protected/manual acceptance, distinguish automated deployment success from owner/user-flow acceptance. One does not imply the other.
 
 ### ROADMAP
 
-State only the remaining work relevant to the current objective. Durable roadmap/status truth belongs in the target repository and should be updated there when the cycle materially changes it.
+State only the remaining work relevant to the current objective and the next project-level lane when it is material to continuation.
+
+Durable roadmap/status truth belongs in the target repository and should be updated there when the cycle materially changes it. Never infer whole-project completion merely because the current issue, PR, or bounded work object completed.
+
+If the project defines a native status/roadmap workflow, use that authoritative workflow before making a project-level completion or next-lane claim.
 
 ### NEXT
 
-Give exactly one recommended next action. It must be executable by a fresh agent from durable state.
+Give exactly one recommended next action. It must be executable by a fresh authorized agent from durable state.
+
+Preserve the current attempt/lineage when the next action is ordinary review, CI-result handling, quick bounded repair, or continuation and the parent project has not superseded it.
 
 ### BLOCKER
 
-Use `None`, or name the precise unresolved condition. Waiting for a normally progressing asynchronous dependency such as CI is not automatically a blocker.
+Use `None`, or name the precise unresolved condition and, when applicable, the exact owner/external action required.
+
+Waiting for a normally progressing asynchronous dependency such as CI is not automatically a blocker. A human gate is a blocker only when the parent project's governance or current evidence genuinely requires that human action before progress can continue.
 
 ### HANDOFF
 
-Name the intended next role/worker and the durable resume point. For asynchronous waits, state who owns the wait and what event makes project work actionable again.
+Name the intended next role/worker or control-plane owner and the durable resume point.
+
+A handoff description is not permission to mutate a scheduler. Follow the parent project's authority model:
+
+- if the current role has no scheduler authority, state the durable return target/resume point and stop;
+- if another control-plane role owns future scheduling, name that role;
+- if an authorized scheduler effect already occurred, report the verified target/effect without implying more than was actually done.
+
+For asynchronous waits, state who owns monitoring and what terminal event makes the existing project lineage actionable again.
 
 ## Durable-state rule
 
-The report is not authoritative project memory. Before handoff, persist substantive project state in the target repository or the parent orchestration runtime as required by that project's instructions.
+The report is not authoritative project memory. Before handoff, persist substantive project state in the target repository or parent orchestration runtime as required by that project's instructions.
 
 A fresh agent with no chat history should be able to use the repository plus the identifiers in this report to continue safely.
+
+## Execution-lineage rule
+
+Treat an execution attempt/branch/fence as a durable lineage when the parent project defines one.
+
+Ordinary events such as these do **not** by themselves create a new lineage:
+
+- a Scheduled Task invocation ends;
+- control returns to a Director/reviewer;
+- CI is queued or running;
+- CI becomes terminal;
+- a bounded same-objective defect is found;
+- a different reusable worker later resumes the same authorized attempt.
+
+Only report a new attempt/branch/fence when durable project authority actually created or superseded one.
 
 ## Waiting CI example
 
 ```text
 STATUS
-waiting_ci — implementation attempt completed and worker released.
+waiting_ci — implementation is checkpointed; the existing execution lineage is detached while CI runs.
 
 EVIDENCE
 repo=owner/project
-branch=work/example/attempt-3
+work_id=example-v1
+attempt_id=3
+fence_token=3
+branch=work/example-v1/attempt-3
 head=abc123
 ci_run=123456789
 expected_sha=abc123
@@ -83,19 +139,52 @@ CHANGES
 Implemented the assigned bounded change and pushed candidate abc123.
 
 VALIDATION
-Local checks passed on abc123. GitHub Actions run 123456789 is in_progress for abc123.
+Local checks passed on abc123. GitHub Actions run 123456789 is in_progress for expected_sha abc123.
 
 ROADMAP
-Review CI result, then continue the objective according to the repository checkpoint.
+The current bounded objective remains active. Review the exact CI result before any merge or further implementation decision.
 
 NEXT
-When run 123456789 becomes terminal, dispatch a fresh repo agent to review_ci_result against expected_sha abc123.
+When run 123456789 becomes terminal, reconcile it against expected_sha abc123 and resume the same attempt-3 lineage if authority is unchanged.
 
 BLOCKER
 None.
 
 HANDOFF
-Recovery Agent owns the CI wait; Repo Agent A/B resumes from the repository checkpoint after CI becomes terminal.
+The project's designated async/control-plane role owns monitoring. The next authorized repo invocation resumes from attempt 3 and the durable checkpoint; this report does not itself schedule that invocation.
+```
+
+## Scheduler-free repo return example
+
+```text
+STATUS
+returned_to_control_plane — bounded repo work is checkpointed and this worker is exiting.
+
+EVIDENCE
+repo=owner/project
+work_id=example-v1
+attempt_id=3
+branch=work/example-v1/attempt-3
+head=def456
+checkpoint=state/work/example-v1.json
+
+CHANGES
+Completed the assigned bounded implementation and persisted return state.
+
+VALIDATION
+Focused tests passed on def456. No additional validation is claimed.
+
+ROADMAP
+Director/control-plane reconciliation determines the next project slice from durable project status and roadmap.
+
+NEXT
+Control plane should reconcile the persisted return state and choose the next authorized action.
+
+BLOCKER
+None.
+
+HANDOFF
+Returned durably to the control plane at state/work/example-v1.json. This repo role performs no scheduler mutation.
 ```
 
 ## Superseded/late-exit example
@@ -117,22 +206,22 @@ VALIDATION
 Confirmed durable runtime assigns a newer attempt/fence token.
 
 ROADMAP
-Successor attempt continues the objective.
+The successor lineage continues the bounded objective; this stale attempt must not reclaim ownership.
 
 NEXT
-Director should reconcile any previously unrecorded commit on the old attempt branch if useful.
+Control plane should reconcile any useful unrecorded evidence from the old branch without restoring its write authority.
 
 BLOCKER
 None.
 
 HANDOFF
-No handoff from this stale attempt; stop after recording late-exit evidence.
+None from this stale attempt. Stop after recording late-exit evidence.
 ```
 
 ## Style
 
 - Answer first; no greetings, praise, throat-clearing, or narrative setup.
 - Prefer identifiers and concrete facts over prose.
-- Do not expose private chain-of-thought or speculative reasoning.
+- Keep lifecycle state, project state, scheduler telemetry, and durable authority distinct.
 - Do not repeat unchanged repository documentation in the report.
-- Keep the envelope concise enough to scan quickly, while including every identifier needed for verification/resume.
+- Keep the envelope concise enough to scan quickly while including every identifier needed for verification and resume.
