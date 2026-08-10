@@ -14,6 +14,9 @@ project-skills/
 ├── agent-reporting/
 │   ├── README.md
 │   └── SKILL.md
+├── director-workflow/
+│   ├── README.md
+│   └── SKILL.md
 └── pw-workflow/
     ├── README.md
     └── SKILL.md
@@ -92,6 +95,34 @@ Project-specific instructions remain authoritative for project-specific policy. 
 Concise autonomous-agent completion/wait/handoff contract using `STATUS / EVIDENCE / CHANGES / VALIDATION / ROADMAP / NEXT / BLOCKER / HANDOFF`. Durable project truth stays in the target repository; the envelope carries exact verification and resume evidence.
 
 See [`agent-reporting/README.md`](agent-reporting/README.md) and [`agent-reporting/SKILL.md`](agent-reporting/SKILL.md).
+
+### `director-workflow`
+
+Director control-plane workflow for whole-queue status, individual project status, adding explicit work, deriving needed work from repository status/roadmap plus live evidence, planning next work, queue control, reconciliation, and reporting only genuine human-required blockers.
+
+Commands:
+
+```text
+director-status
+director-project-status <project>
+director-add-work <project>: <request>
+director-add-work <project> --derive
+director-plan-work <project>
+director-control <instruction>
+director-reconcile
+director-reconcile <project>
+director-needs-me
+```
+
+The skill also enforces the Director lifecycle invariant:
+
+```text
+Inspect -> Work -> Verify -> Synchronize repo state -> Handoff
+```
+
+Material changes to project truth must be reflected in the managed repository's authoritative status/roadmap/checkpoint state before a successful handoff.
+
+See [`director-workflow/README.md`](director-workflow/README.md) and [`director-workflow/SKILL.md`](director-workflow/SKILL.md).
 
 ### `pw-workflow`
 
