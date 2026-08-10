@@ -69,7 +69,7 @@ For protected/manual acceptance, distinguish automated deployment success from o
 
 State only the remaining work relevant to the current objective and the next project-level lane when it is material to continuation.
 
-Durable roadmap/status truth belongs in the target repository and should be updated there when the cycle materially changes it. Never infer whole-project completion merely because the current issue, PR, or bounded work object completed.
+Durable roadmap/status truth belongs in the target repository and **must be updated there before a clean successful handoff whenever the cycle materially changed project truth**. Never infer whole-project completion merely because the current issue, PR, or bounded work object completed.
 
 If the project defines a native status/roadmap workflow, use that authoritative workflow before making a project-level completion or next-lane claim.
 
@@ -85,6 +85,8 @@ Use `None`, or name the precise unresolved condition and, when applicable, the e
 
 Waiting for a normally progressing asynchronous dependency such as CI is not automatically a blocker. A human gate is a blocker only when the parent project's governance or current evidence genuinely requires that human action before progress can continue.
 
+If material project truth changed but required repository status/roadmap/checkpoint state could not be synchronized, report that exact unsynchronized state here. Do not hide it behind a successful handoff.
+
 ### HANDOFF
 
 Name the intended next role/worker or control-plane owner and the durable resume point.
@@ -97,9 +99,26 @@ A handoff description is not permission to mutate a scheduler. Follow the parent
 
 For asynchronous waits, state who owns monitoring and what terminal event makes the existing project lineage actionable again.
 
+A clean successful `HANDOFF` requires that material project truth already be synchronized into the repository or other project-native durable state required by project instructions. If synchronization is required but incomplete, state the incomplete handoff and corresponding blocker instead of claiming that a fresh agent can safely resume.
+
 ## Durable-state rule
 
-The report is not authoritative project memory. Before handoff, persist substantive project state in the target repository or parent orchestration runtime as required by that project's instructions.
+The report is not authoritative project memory.
+
+Before handoff, persist substantive project state in the target repository or parent orchestration runtime as required by that project's instructions. When the cycle materially changes status, roadmap, next steps, blockers, locked decisions, validation state, or resumable technical state, synchronize the corresponding project-native durable sources before reporting a clean successful handoff.
+
+At minimum, when applicable:
+
+1. update current status;
+2. mark completed/obsolete next steps so they are not repeated;
+3. record new remaining work and dependency order;
+4. record blockers/waits and who or what resolves them;
+5. preserve material decisions/constraints discovered during the cycle;
+6. record exact verification/resume evidence.
+
+Do not create documentation churn for immaterial changes.
+
+If required durable synchronization is impossible because of missing authority, unavailable source material, write failure, conflicting project instructions, or another real constraint, report the exact condition under `BLOCKER` and do not present the result as a clean successful handoff.
 
 A fresh agent with no chat history should be able to use the repository plus the identifiers in this report to continue safely.
 
@@ -142,7 +161,7 @@ VALIDATION
 Local checks passed on abc123. GitHub Actions run 123456789 is in_progress for expected_sha abc123.
 
 ROADMAP
-The current bounded objective remains active. Review the exact CI result before any merge or further implementation decision.
+The current bounded objective remains active. Repository status/roadmap/checkpoint state records the CI wait and expected SHA abc123. Review the exact CI result before any merge or further implementation decision.
 
 NEXT
 When run 123456789 becomes terminal, reconcile it against expected_sha abc123 and resume the same attempt-3 lineage if authority is unchanged.
@@ -169,13 +188,13 @@ head=def456
 checkpoint=state/work/example-v1.json
 
 CHANGES
-Completed the assigned bounded implementation and persisted return state.
+Completed the assigned bounded implementation and synchronized repository status/roadmap state before return.
 
 VALIDATION
 Focused tests passed on def456. No additional validation is claimed.
 
 ROADMAP
-Director/control-plane reconciliation determines the next project slice from durable project status and roadmap.
+Repository project truth reflects the completed slice and remaining work. Director/control-plane reconciliation determines the next project slice from that durable state.
 
 NEXT
 Control plane should reconcile the persisted return state and choose the next authorized action.
