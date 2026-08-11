@@ -1,20 +1,28 @@
 # Director Workflow
 
-Shared control-plane workflow for interacting with Director and managed project repositories.
+Shared workflow family for Director orchestration, fenced Repo execution, and common reporting/handoff semantics.
 
-## What it standardizes
+## Role-scoped package layout
 
-- whole-queue status;
-- individual project status;
-- adding explicit work;
-- deriving needed work from a project's own status/roadmap and live evidence;
-- planning next work without automatically queuing it;
-- queue control and reprioritization;
-- full-queue or project-level reconciliation;
-- reporting only items that genuinely require Clint;
-- submitting Director work while remaining inside a managed project's chat/repository scope.
+```text
+director-workflow/
+├── README.md
+├── SKILL.md                         # interactive/general Director workflow compatibility entry point
+├── director-agent/
+│   └── SKILL.md                     # autonomous Director role entry point
+├── repo-agent/
+│   └── SKILL.md                     # autonomous fenced Repo role entry point
+└── shared/
+    └── reporting-handoff.md         # role-neutral durable report/handoff contract
+```
 
-## Commands
+The role entry points are intentionally thin. A Director agent does not need to load Repo execution methodology, and a Repo agent does not need to load Director queue-control methodology.
+
+`agent-reporting/SKILL.md` remains available as a compatibility shim and redirects to the shared reporting/handoff contract during migration.
+
+## Director operations
+
+The existing top-level `SKILL.md` continues to standardize human/interactive Director operations including:
 
 ```text
 director-status
@@ -28,42 +36,27 @@ director-reconcile <project>
 director-needs-me
 ```
 
-Natural-language equivalents are intentionally supported. Examples include `What is the Director status?`, `What is going on with Futures?`, `Add this to Futures: ...`, `Look at Futures and add whatever it actually needs next`, `Make Futures the top priority`, and `What needs me?`.
+Natural-language equivalents remain supported.
 
-## Use from a managed project chat
+For an autonomous Director worker, load `director-agent/SKILL.md`; it references the top-level Director orchestration contract plus only the shared handoff contract.
 
-When a chat is already scoped to a managed project, Director control-plane submission for that same project does not switch the project's working scope.
-
-Examples:
-
-```text
-Add this to Director: <request>
-Queue this for later: <request>
-Add whatever this project needs next to Director.
-What does Director have queued for this project?
-```
-
-The current project is inferred unless the user names another target. The workflow writes only the minimum required orchestration state; it does not begin unrelated development in the Director repository.
-
-Existing consuming repositories use pinned `.project-skills` submodule commits. They must deliberately advance that pointer before they receive a newer shared-skill version.
+For an autonomous Repo worker, load `repo-agent/SKILL.md`; it owns fenced assignment verification and bounded repository execution without inheriting Director queue/scheduler policy.
 
 ## Core architecture
 
-The skill keeps four kinds of state separate:
+The workflow family keeps these authority domains separate:
 
 - **managed repository** — project truth, roadmap, decisions, blockers, resumable state;
 - **Director** — orchestration/queue/ownership truth;
-- **Git/PR/CI/deployment systems** — proof of work;
+- **Git/issue/PR/CI/deployment systems** — proof of work;
 - **conversation** — current user intent, not durable memory.
 
-## Required lifecycle
-
-Material project work must follow:
+Material work follows:
 
 ```text
 Inspect -> Work -> Verify -> Synchronize repo state -> Handoff
 ```
 
-Repository status/roadmap/checkpoint documentation must reflect material project changes before a successful handoff. If the needed synchronization cannot be performed, the agent must report that explicitly rather than claiming a clean handoff.
+Reusable process belongs in shared skills. Consuming repositories retain local authority for governance, permissions, scheduler topology, safety boundaries, CI, merge policy, and production actions.
 
-`SKILL.md` is authoritative.
+Pinned `.project-skills` consumers must deliberately advance their submodule revision before receiving this workflow family.
