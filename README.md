@@ -6,23 +6,29 @@ This repository is intended to be included in other repositories as a Git submod
 
 ## Repository layout
 
-Each skill lives in its own top-level directory:
+Each top-level skill keeps its authoritative entry point in `SKILL.md`, but a skill may contain narrowly scoped role entry points when doing so avoids forcing unrelated workflow policy into every agent.
 
 ```text
 project-skills/
 ├── README.md
 ├── agent-reporting/
 │   ├── README.md
-│   └── SKILL.md
+│   └── SKILL.md                         # compatibility shim
 ├── director-workflow/
 │   ├── README.md
-│   └── SKILL.md
+│   ├── SKILL.md                         # general/interactive Director workflow
+│   ├── director-agent/
+│   │   └── SKILL.md                     # autonomous Director entry point
+│   ├── repo-agent/
+│   │   └── SKILL.md                     # autonomous Repo entry point
+│   └── shared/
+│       └── reporting-handoff.md         # role-neutral report/handoff contract
 └── pw-workflow/
     ├── README.md
     └── SKILL.md
 ```
 
-New reusable skills should follow the same pattern:
+New reusable top-level skills should normally follow:
 
 ```text
 <skill-name>/
@@ -30,7 +36,7 @@ New reusable skills should follow the same pattern:
 └── SKILL.md
 ```
 
-`SKILL.md` is the authoritative skill definition. The skill-local `README.md` is human-facing documentation.
+Role-specific nested entry points are appropriate only when they keep reusable process modular without creating competing sources of truth.
 
 ## Add to another project as a submodule
 
@@ -86,21 +92,28 @@ When a user request matches a shared skill or invokes one of its defined command
 Do not modify files inside `.project-skills/` as part of normal project work. Changes to shared skills belong in the `clint-miller/project-skills` repository. The parent repository should only update the pinned submodule commit when adopting a newer shared-skills version.
 ```
 
-Project-specific instructions remain authoritative for project-specific policy. Shared skills should provide reusable workflow behavior without replacing local governance, safety rules, release policy, CI requirements, or approval gates.
+Project-specific instructions remain authoritative for project-specific policy. Shared skills provide reusable workflow behavior without replacing local governance, safety rules, release policy, CI requirements, approval gates, scheduler authority, or production permissions.
 
 ## Available skills
 
 ### `agent-reporting`
 
-Concise autonomous-agent completion/wait/handoff contract using `STATUS / EVIDENCE / CHANGES / VALIDATION / ROADMAP / NEXT / BLOCKER / HANDOFF`. Durable project truth stays in the target repository; the envelope carries exact verification and resume evidence.
+Legacy-compatible entry point for the shared `STATUS / EVIDENCE / CHANGES / VALIDATION / ROADMAP / NEXT / BLOCKER / HANDOFF` envelope. During migration it redirects to `director-workflow/shared/reporting-handoff.md` so reporting semantics are shared by Director and Repo roles without duplicating execution policy.
 
 See [`agent-reporting/README.md`](agent-reporting/README.md) and [`agent-reporting/SKILL.md`](agent-reporting/SKILL.md).
 
 ### `director-workflow`
 
-Director control-plane workflow for whole-queue status, individual project status, adding explicit work, deriving needed work from repository status/roadmap plus live evidence, planning next work, queue control, reconciliation, and reporting only genuine human-required blockers.
+Reusable Director workflow family.
 
-Commands:
+- [`director-workflow/SKILL.md`](director-workflow/SKILL.md) remains the general/interactive Director control contract.
+- [`director-workflow/director-agent/SKILL.md`](director-workflow/director-agent/SKILL.md) is the thin autonomous Director role entry point.
+- [`director-workflow/repo-agent/SKILL.md`](director-workflow/repo-agent/SKILL.md) is the thin fenced Repo execution entry point.
+- [`director-workflow/shared/reporting-handoff.md`](director-workflow/shared/reporting-handoff.md) contains the common role-neutral reporting/handoff semantics.
+
+The separation keeps Director queue/control behavior out of Repo execution loads and keeps Repo implementation methodology out of Director control-plane loads.
+
+Existing Director commands remain:
 
 ```text
 director-status
@@ -114,15 +127,7 @@ director-reconcile <project>
 director-needs-me
 ```
 
-The skill also enforces the Director lifecycle invariant:
-
-```text
-Inspect -> Work -> Verify -> Synchronize repo state -> Handoff
-```
-
-Material changes to project truth must be reflected in the managed repository's authoritative status/roadmap/checkpoint state before a successful handoff.
-
-See [`director-workflow/README.md`](director-workflow/README.md) and [`director-workflow/SKILL.md`](director-workflow/SKILL.md).
+See [`director-workflow/README.md`](director-workflow/README.md).
 
 ### `pw-workflow`
 
@@ -145,8 +150,9 @@ See [`pw-workflow/README.md`](pw-workflow/README.md) and [`pw-workflow/SKILL.md`
 ## Design rules
 
 - Keep skills project-agnostic.
-- Keep one skill per top-level directory.
+- Keep one canonical top-level skill per top-level directory.
+- Use nested role entry points only to avoid unnecessary policy loading and preserve one shared source for common contracts.
 - Use a distinctive command namespace when a skill exposes shorthand commands.
 - Do not duplicate project-specific governance in shared skills.
 - Treat each consuming project's submodule commit as its approved shared-skill version.
-- Change shared skills in this repository, then deliberately update consuming projects to the desired commit.
+- Change shared skills in this repository, validate them, then deliberately update consuming projects to the desired commit.
