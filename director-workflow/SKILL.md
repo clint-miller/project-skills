@@ -79,6 +79,99 @@ When these disagree, identify the disagreement and reconcile it rather than sile
 7. **Keep project docs current.** Material project state changes must be reflected durably in the managed repository before successful handoff.
 8. **A fresh agent must be able to resume from durable state.** Never make chat history necessary for safe continuation.
 
+# Issue-backed Director intake and planning contract
+
+Use this contract when a managed repository participates in the accepted Director-managed GitHub Issue lifecycle. It is an intake/planning contract only; lifecycle scanning and label mutation remain separate implementation concerns unless another authorized workflow explicitly provides them.
+
+## Lifecycle semantics
+
+The accepted v1 lifecycle is:
+
+```text
+no Director label
+-> director:approved
+-> director:queued
+-> director:active
+-> director:verify
+-> director:done
+-> closed
+```
+
+`director:blocked` is the temporary blocked state from queued/active work and may return to the appropriate actionable state after reconciliation.
+
+`director:approved` means **the owner authorized Director intake**, not that code execution is automatically authorized. Approval requires Director to inspect, normalize, deduplicate, and determine whether planning/research is required before an executable Repo assignment exists.
+
+Director runtime remains orchestration authority. The GitHub issue remains the project-local request, rationale, discussion, and narrative history. Do not copy the entire issue body or mutable label state into Director runtime as a second authoritative record.
+
+## Immutable issue identity and deduplication
+
+Treat the tuple below as the stable identity of issue-backed work:
+
+```text
+origin.repository + origin.issue_number
+```
+
+Before creating or adding Director work from an approved issue:
+
+1. search active/non-terminal Director work for that exact repository + issue number identity;
+2. if linked work already exists, reconcile/update that work instead of creating a duplicate;
+3. do not deduplicate solely by title, issue text, branch name, or conversational similarity;
+4. terminal historical work remains historical; a reopened/renewed request may require a successor work lineage rather than mutation of the completed record.
+
+Repeated intake of the same approved issue must therefore be idempotent.
+
+## Normalizing an approved issue into Director work
+
+When Director accepts approved issue-backed work, create or update the smallest linked orchestration record needed for autonomous continuation. Preserve the issue as narrative authority and normalize only execution-relevant facts, including when applicable:
+
+- immutable issue repository + issue number reference;
+- normalized objective and acceptance criteria;
+- priority/dependencies owned by Director;
+- current planning requirement/status;
+- structured plan task/group/checkpoint identifiers when planning is required;
+- exact next ready task(s), only after dependencies/checkpoints are satisfied;
+- stop/block/human-required conditions;
+- repository/branch/fence/context details only when an executable bounded assignment is actually materialized.
+
+Do not treat issue approval itself as permission to assign a Repo Agent. An executable assignment still requires the normal Director dispatch contract, repository readiness, scope, context packet, fence/branch identity, and capacity checks.
+
+## Planning requirement
+
+Require structured research/planning/decomposition when **any** of these conditions apply:
+
+- architecture or control-plane change;
+- cross-repository work;
+- unknown root cause or substantial discovery;
+- more than one dependent executable task;
+- schema, protocol, or governance change;
+- high-risk or difficult-to-reverse change;
+- deployment/production implications;
+- acceptance requires multiple independent checkpoints.
+
+A direct bounded dispatch is allowed only when **all** of these conditions are true:
+
+- objective is already clear;
+- one small independent task can complete it;
+- risk is low and reversible;
+- acceptance criteria are obvious and verifiable;
+- no unresolved dependency or research question remains.
+
+For planned work, persist the dispatch graph/status durably enough that a fresh Director can determine which task is ready next. Narrative research may stay in issue comments or project artifacts, but executable dependency/checkpoint state must not depend on chat memory.
+
+If new repository evidence invalidates the current plan, revise the durable plan and record the reason rather than silently improvising around dependency or checkpoint rules.
+
+## Operation integration
+
+Apply the issue-backed contract consistently to existing Director operations:
+
+- `director-status` / `director-project-status`: show linked issue identity and reconciled lifecycle when issue-backed work is materially active; do not imply `director:approved` means implementation is active.
+- `director-add-work`: when the request originates from or resolves to an approved issue, deduplicate by immutable issue identity before creating linked work.
+- `director-add-work --derive`: approved issue intake is evidence for authorized work-management intake, but derived executable work still requires repository truth, planning/dependency checks, and normal dispatch authority.
+- `director-plan-work`: apply the planning criteria above and persist structured task/dependency/checkpoint state when non-trivial work requires it.
+- `director-reconcile`: detect duplicate linked work, issue/runtime mismatch, material issue edits, manual closure, or stale assumptions; fail closed on ambiguous owner intent rather than continuing execution blindly.
+
+This section does **not** authorize registered-repository issue scanning, lifecycle label writes, issue closure, Repo Agent issue-progress comments, dashboard mutation, scheduler changes, or managed-project rollout. Those behaviors require their separately authorized implementation phases.
+
 # Cross-repo Director submission from a managed project chat
 
 A user may invoke Director control-plane operations while working inside a specific managed project/repository chat.
