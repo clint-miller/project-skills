@@ -30,6 +30,16 @@ Before any target mutation, prove the current assignment and branch/fence still 
 7. Synchronize material target-repository status/roadmap/checkpoint truth before claiming a clean return.
 8. Persist return/wait evidence to the consuming Director runtime, then report using `../shared/reporting-handoff.md`.
 
+## Capability-aware blocker return
+
+When the current execution surface cannot safely satisfy a required capability, fail closed on target mutation but return structured capability evidence rather than prose alone.
+
+Prefer the least-specialized sufficient surface: `agent_local` -> `agent_local_plus_github` -> `target_runner_prewrite` -> `normal_exact_head_ci` -> `human_required`. A self-hosted runner is not the default parser; use `target_runner_prewrite` only when the missing requirement is genuinely target-specific, such as a private checked-out workspace, target OS/runtime, governed dependency, or explicitly verified machine-local resource. Never assume `Q:` or any machine-local path merely because a runner is self-hosted.
+
+The durable blocker should identify, when applicable: required capability; current surface and insufficiency; whether any agent-local subset remains possible; whether private repository or private workspace access is required; required OS/dependencies; explicitly required machine-local resources; the narrow runner task needed; whether full CI is required now or only after write; and the safe fallback/escalation path.
+
+Return the blocker to Director for capability reconciliation with the same attempt/fence/branch unless authority actually changed. Do not convert an autonomous capability gap into `human_required` merely because the current Repo surface is insufficient. Owner attention belongs only to genuine owner-only requirements or exhausted bounded autonomous recovery under the consuming Director contract.
+
 ## Issue-backed work progress
 
 When the durable assignment identifies a Director-managed originating GitHub issue, maintain concise project-local history in that issue as part of the bounded execution contract. Issue comments are narrative evidence; they do not replace Director runtime authority.

@@ -30,6 +30,24 @@ Within the consuming project's authority and execution bounds:
 8. Publish/update the consuming Director's required status surface when its local policy requires one.
 9. Report the iteration with `../shared/reporting-handoff.md`.
 
+## Capability-aware execution routing
+
+When a Repo return or Director action is blocked by missing execution capability, route to the least-specialized sufficient authorized surface rather than escalating immediately to a broader or human path.
+
+Use this ordered ladder:
+
+1. `agent_local` for safe local parsing, compilation, transformation, or deterministic validation;
+2. `agent_local_plus_github` when GitHub supplies authoritative private source/state but candidate construction and validation can remain local;
+3. `target_runner_prewrite` only when a private checked-out workspace, target OS/runtime, governed dependency, or explicitly verified machine-local resource is required;
+4. `normal_exact_head_ci` only when repository-required post-write/exact-head validation is actually required at that stage;
+5. `human_required` only for owner-only capability/policy or after bounded autonomous recovery is exhausted.
+
+Do not use a self-hosted runner merely because it exists. Never assume `Q:` or another machine-local resource is present without explicit capability evidence.
+
+For unresolved capability blockers, preserve structured durable evidence equivalent to: required capability, current surface and insufficiency, agent-local subset availability, private repository/workspace requirement, target OS/dependencies, explicitly required machine-local resources, narrow runner task if applicable, whether full CI is required now, and the safe fallback. Director must give the blocker a current owner, deterministic next reconciliation, and bounded attempt/time budget. Routine tracked CI waits are outside this blocker budget.
+
+If safe autonomous routing remains available, execute or assign that route before creating owner attention. As the bounded recovery budget approaches exhaustion, surface that state in Director status. On exhaustion—or immediately for a genuinely owner-only capability—create/update canonical `user_attention` and escalate instead of leaving the work stale.
+
 ## Authority boundary
 
 This shared entry point does not grant scheduler, merge, security, production, credential, or cross-repository authority. Those permissions come only from the consuming repository's accepted policy and current durable assignment.
