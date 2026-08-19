@@ -1,0 +1,40 @@
+schema_version: 1
+project_id: project-skills
+repository: clint-miller-projects/project-skills
+default_branch: main
+purpose: shared_project_agnostic_agent_skills
+
+bootstrap:
+  instructions: AGENTS.md
+  overview: README.md
+  skill_definition: "<skill-name>/SKILL.md"
+  skill_documentation: "<skill-name>/README.md"
+
+skill_authority:
+  authoritative_definition: SKILL.md
+  human_facing_documentation: README.md
+  project_specific_governance_outranks_shared_skills: true
+
+change_policy:
+  branch_and_pull_request_required: true
+  consumer_adoption_is_separate_explicit_work: true
+  consumer_pin_or_reference_updates_in_skill_change: false
+  deployment_or_activation_in_skill_change: false
+
+verification:
+  repository_native_ci_present_at_onboarding: false
+  require_exact_diff_review: true
+  require_authoritative_skill_and_docs_consistency: true
+  never_invent_ci_evidence: true
+
+director:
+  onboarding_state: pending_runtime_registration_and_read_only_canary
+  lifecycle_repo: clint-miller-projects/project-skills
+  lifecycle_issue: 8
+  runtime_lifecycle_semantics_owned_by_director4: true
+  browser_response_is_not_authoritative_completion: true
+
+repository_transition:
+  current_repository: clint-miller-projects/project-skills
+  historical_repository_reference: clint-miller/project-skills
+  historical_reference_is_authority: false
